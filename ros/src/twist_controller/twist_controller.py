@@ -17,7 +17,7 @@ class Controller(object):
 	ki = 0.1
 	kd = 0.
 	throttle_min = 0.  #min throttle value
-	throttle_max = 0.2  #max throttle value
+	throttle_max = 1.  #max throttle value
         brake_min = 0.
         brake_max = 1.
 	self.throttle_controller = PID(kp, ki, kd, throttle_min, throttle_max) 
@@ -40,6 +40,7 @@ class Controller(object):
         # TODO: Change the arg, kwarg list to suit your needs
         if not dbw_enabled:
             self.throttle_controller.reset()
+            self.brake_controller.reset()
             return 0., 0., 0.
 
         current_vel = self.vel_lpf.filt(current_vel)
