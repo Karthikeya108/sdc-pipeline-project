@@ -25,7 +25,7 @@ TODO (for Yousuf and Aaron): Stopline location for each traffic light.
 '''
 
 LOOKAHEAD_WPS = 200 # Number of waypoints we will publish. You can change this number
-
+MAX_DECEL = 0.8
 
 class WaypointUpdater(object):
     def __init__(self):
@@ -53,10 +53,8 @@ class WaypointUpdater(object):
         rate = rospy.Rate(50)
         while not rospy.is_shutdown():
             if self.pose and self.waypoint_tree:
-                #get closest waypoint
-                closest_waypoint_idx = self.get_closest_waypoint_idx()
-                self.publish_waypoints(closest_waypoint_idx)
-            rate.sleep()
+                self.publish_waypoints()
+                rate.sleep()
 
     def get_closest_waypoint_idx(self):
         x = self.pose.pose.position.x
@@ -79,12 +77,9 @@ class WaypointUpdater(object):
 
         return closest_idx
 
-    def publish_waypoints(self, closest_idx):
-        #lane = Lane()
-        #lane.header = self.base_waypoints.header
-        #lane.waypoints = self.base_waypoints.waypoints[closest_idx : closest_idx + LOOKAHEAD_WPS]
-        first_lane = self.generate_lane()
-        self.final_waypoints_pub.publish(first_lane)
+    def publish_waypoints(self):
+        final_lane = self.generate_lane()
+        self.final_waypoints_pub.publish(final_lane)
 
     def generate_lane(self):
         lane = Lane()
@@ -94,9 +89,9 @@ class WaypointUpdater(object):
         base_waypoints = self.base_lane.waypoints[closest_idx:farthest_idx]
 
         if self.stopline_wp_idx == -1 or (self.stopline_wp_idx >= farthest_idx):
-            lane_waypoints = base_waypoints
+            lane.waypoints = base_waypoints
         else:
-            lane_waypoints = self.decelarate_waypoints(base_waypoints, closest_idx)
+            lane.waypoints = self.decelarate_waypoints(base_waypoints, closest_idx)
 
         return lane
 

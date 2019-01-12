@@ -16,9 +16,12 @@ class Controller(object):
 	kp = 0.3
 	ki = 0.1
 	kd = 0.
-	mn = 0.  #min throttle value
-	mx = 0.2 #max throttle value
-	self.throttle_controller = PID(kp, ki, kd, mn, mx) 
+	throttle_min = 0.  #min throttle value
+	throttle_max = 0.2  #max throttle value
+        brake_min = 0.
+        brake_max = 1.
+	self.throttle_controller = PID(kp, ki, kd, throttle_min, throttle_max) 
+        self.brake_controller = PID(kp, ki, kd, brake_min, brake_max)
        
         tau = 0.5 # 1 / (2pi*tau) = cutoff frequency
         ts = .02  # sample time
@@ -37,7 +40,6 @@ class Controller(object):
         # TODO: Change the arg, kwarg list to suit your needs
         if not dbw_enabled:
             self.throttle_controller.reset()
-        # Return throttle, brake, steer
             return 0., 0., 0.
 
         current_vel = self.vel_lpf.filt(current_vel)
@@ -52,15 +54,14 @@ class Controller(object):
         self.last_time = current_time
 
         throttle = self.throttle_controller.step(vel_error, sample_time)
-        brake = 0
+        brake = self.brake_controller.step(-vel_error, sample_time)
 
         if linear_vel == 0. and current_vel < 0.1:
             throttle = 0
             brake = 400  #N * m - to hold the car in place if we are stopped at a light. Accelaration - 1m/s^2
-
         elif throttle < .1 and vel_error < 0:
             throttle = 0
             decel = max(vel_error, self.decel_limit)
             brake = abs(decel) * self.vehicle_mass * self.wheel_radius # Torque N*m
-            
+ 
         return throttle, brake, steering
