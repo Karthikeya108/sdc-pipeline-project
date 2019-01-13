@@ -57,8 +57,6 @@ class TLDetector(object):
 
     def pose_cb(self, msg):
         self.pose = msg
-        if self.waypoints:
-            self.image_cb()
 
     def waypoints_cb(self, waypoints):
         self.waypoints = waypoints
@@ -68,6 +66,8 @@ class TLDetector(object):
 
     def traffic_cb(self, msg):
         self.lights = msg.lights
+        if self.waypoints:
+            self.image_cb()
 
     #def image_cb(self, msg):  # TODO remove test commenting
     def image_cb(self):  #testing
